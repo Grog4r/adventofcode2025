@@ -1,3 +1,6 @@
+from copy import deepcopy
+
+
 class PaperMap:
 
     paper_map = []
@@ -15,19 +18,21 @@ class PaperMap:
         print(paper_map)
 
     def surroundings_less_than_4(self, x, y) -> bool:
-        free = 0
+        surroundings = 0
         for y_delta in [-1, 0, 1]:
             for x_delta in [-1, 0, 1]:
+                if y_delta == 0 and x_delta == 0:
+                    continue
                 x_check = x + x_delta
                 y_check = y + y_delta
                 if (x_check < 0 or x_check >= len(self.paper_map[y])) or (
                     y_check < 0 or y_check >= len(self.paper_map)
                 ):
-                    free += 1
+                    continue
                 else:
-                    if self.paper_map[y_check][x_check] == ".":
-                        free += 1
-        return free > 4
+                    if self.paper_map[y_check][x_check] == "@":
+                        surroundings += 1
+        return surroundings < 4
 
     def print_checked_paper_map(self) -> None:
         checked_paper_map = ""
@@ -42,12 +47,17 @@ class PaperMap:
             checked_paper_map += "\n"
         print(checked_paper_map)
 
-    def count_free_paper_rolls(self) -> int:
+    def count_and_remove_paper_rolls(self) -> int:
+        new_paper_map = deepcopy(self.paper_map)
         free_paper_rolls = 0
         for y in range(len(self.paper_map)):
             for x in range(len(self.paper_map[0])):
                 if self.paper_map[y][x] == "@":
-                    free_paper_rolls += int(self.surroundings_less_than_4(x, y))
+                    can_be_accessed = self.surroundings_less_than_4(x, y)
+                    if can_be_accessed:
+                        new_paper_map[y][x] = "."
+                    free_paper_rolls += int(can_be_accessed)
+        self.paper_map = new_paper_map
         return free_paper_rolls
 
 
@@ -61,10 +71,18 @@ def read_map(file_path: str) -> PaperMap:
 def main() -> None:
     FILE_PATH = "day4/input.txt"
     paper_map = read_map(FILE_PATH)
-    paper_map.print_map()
+    # paper_map.print_map()
+
+    total_removed_paper_rolls = 0
     paper_map.print_checked_paper_map()
-    free_paper_rolls = paper_map.count_free_paper_rolls()
-    print(free_paper_rolls)
+    while True:
+        removed_paper_rolls = paper_map.count_and_remove_paper_rolls()
+        print(removed_paper_rolls)
+        total_removed_paper_rolls += removed_paper_rolls
+        paper_map.print_checked_paper_map()
+        if not removed_paper_rolls > 0:
+            break
+    print(total_removed_paper_rolls)
 
 
 if __name__ == "__main__":
